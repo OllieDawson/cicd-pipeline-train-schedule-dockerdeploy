@@ -14,7 +14,7 @@
             }
             steps {
                 script {
-                    app = docker.build("OllieDawson/train-website")
+                    app = docker.build("olliedawson/train-website")
                     app.inside {
                         sh 'echo $(curl localhost:8080)'
                     }
@@ -50,7 +50,7 @@
                         } catch (err) {
                             echo: 'caught error: $err'
                         }
-                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 8080:8080 -d OllieDawson/train-website:${env.BUILD_NUMBER}\""
+                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 8080:8080 -d olliedawson/train-website:${env.BUILD_NUMBER}\""
                     }
                 }
             }
