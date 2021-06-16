@@ -15,7 +15,7 @@ pipeline {
             }
             steps {
                 script {
-                    app = docker.build("olliedawson/train-website")
+                    app = docker.build("OllieDawson/train-website")
                     app.inside {
                         sh 'echo $(curl localhost:8080)'
                     }
@@ -35,5 +35,26 @@ pipeline {
                 }
             }
         }
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                withCredentials([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+                    script {
+                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker pull OllieDawson/train-website:${env.BUILD_NUMBER}\""
+                        try {
+                            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker stop train-website\""
+                            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker rm train-website\""
+                        } catch (err) {
+                            echo: 'caught error: $err'
+                        }
+                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 8080:8080 -d OllieDawson/train-website:${env.BUILD_NUMBER}\""
+                    }
+                }
+            }
+        }
     }
-}    
+}
